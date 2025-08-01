@@ -1,9 +1,15 @@
-const App = ()=>{
+import { Provider } from "react-redux";
+import Body from "./components/Body";
+import appStore from "./utils/appStore";
+
+const App = () => {
   return (
     <div>
-      <h1 className="font-bold text-3xl text-center ">Hello World</h1>
+      <Provider store={appStore}>
+        <Body />
+      </Provider>
     </div>
-  )
-}
+  );
+};
 
 export default App;
