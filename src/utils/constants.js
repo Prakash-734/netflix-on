@@ -14,3 +14,6 @@ export const SUPPORTED_LANGUAGES = [
   { identifier: "ta", name: "Tamil" },
   { identifier: "hin", name: "Hindi" },
 ];
+
+
+export const OPENAI_KEY = "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"
