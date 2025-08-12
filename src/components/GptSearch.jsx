@@ -1,15 +1,23 @@
 import GptMovieSuggestions from "./GptMovieSuggestions";
-import GptSearchBar from "./GptSearchBAr";
+import GptSearchBar from "./GptSearchBar";
+
 
 const GptSearch = () => {
   return (
-    <div>
-      <div className="fixed -z-10 md:w-max sm:w-max max-sm:w-max">
-        <img src="auth_bg.jpg" alt="" />
+    <>
+    <div className="fixed -z-10 ">
+        <img
+  className="w-screen h-screen object-cover fixed top-0 left-0"
+  src="auth_bg.jpg"
+  alt=""
+/>
+
       </div>
+    <div className="">
       <GptSearchBar />
       <GptMovieSuggestions />
     </div>
+    </>
   );
 };
 export default GptSearch;

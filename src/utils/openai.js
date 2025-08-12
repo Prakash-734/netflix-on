@@ -11,12 +11,12 @@
 
 
 
-import { OPENAI_KEY } from './constants';
-import Groq from "groq-sdk";
+// import { OPENAI_KEY } from './constants';
+// import Groq from "groq-sdk";
 
-const groq = new Groq({ apiKey:OPENAI_KEY,
-    dangerouslyAllowBrowser:true,
- });
+// const groq = new Groq({ apiKey:OPENAI_KEY,
+//     dangerouslyAllowBrowser:true,
+//  });
 
 
-export default groq;
+// export default groq;

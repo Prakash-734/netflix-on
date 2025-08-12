@@ -1,63 +1,119 @@
 import { useDispatch, useSelector } from "react-redux";
 import lang from "../utils/languageConstants";
-import { useRef } from "react";
-import openai from "../utils/openai";
-import { API_OPTIONS } from "../utils/constants";
+import { useRef, useState } from "react";
 import { addGptMovieResult } from "../utils/gptSlice";
 
-
 const GptSearchBar = () => {
-
   const dispatch = useDispatch();
-
   const langKey = useSelector((store) => store.config.lang);
   const searchText = useRef(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const searchMovieTMDB = async (movie) => {
-    const data = await fetch("https://api.themoviedb.org/3/search/movie?query="+ movie + "&include_adult=false&language=en-US&page=1", API_OPTIONS);
-
-    const json = await data.json();
-
-    return json.results;
-  }
+  const searchMovieTMDB = async (movies) => {
+    try {
+      const response = await fetch("http://localhost:5001/api/search-movies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ movies })
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Backend error: ${response.status}`);
+      }
+      const data = await response.json();
+      return data.searchResults.map(item => item.results);
+    } catch {
+      return movies.map(() => []);
+    }
+  };
 
   const handleGptSearchClick = async () => {
-    console.log(searchText.current.value);
-
-    const gptQuery = "Act as a Movie Recommendation system and suggest some movies for the query :" + searchText.current.value + ". only give me names of 5 movies,comma seperated like the example result given ahead. " ;
-
-    const result = await openai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      messages: [
-        { role: "user", content: gptQuery},
-      ],
-    });
-
-    if(!result.choices){
-      return "Not found"
+    if (!searchText.current.value.trim()) {
+      setError("Please enter a search query");
+      return;
     }
 
-    console.log(result.choices?.[0]?.message?.content);
+    setLoading(true);
+    setError(null);
 
-    const movies = result.choices?.[0]?.message?.content.split(",");
+    try {
+      const gptQuery =
+        "Act as a Movie Recommendation system and suggest some movies for the query: " +
+        searchText.current.value +
+        ". Only give me names of 5 movies, comma separated like: Movie1, Movie2, Movie3, Movie4, Movie5";
 
-    console.log(movies)
+      const response = await fetch("http://localhost:5001/api/gpt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: gptQuery })
+      });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Backend error: ${response.status}`);
+      }
 
-    const promiseArray = movies.map(movie => searchMovieTMDB(movie))
+      const result = await response.json();
 
-    const tmdbResults = await Promise.all(promiseArray);
+      if (result.error) {
+        throw new Error(`Backend error: ${result.error}`);
+      }
 
-    console.log(tmdbResults)
+      if (!result?.choices?.[0]?.message?.content) {
+        throw new Error("Invalid response format from AI");
+      }
 
-    dispatch(addGptMovieResult({movieNames:movies, movieResults:tmdbResults}));
+      const movieString = result.choices[0].message.content;
+      let movies = [];
 
+      const lines = movieString.split("\n");
+      for (const line of lines) {
+        if (line.includes(",") && line.trim().length > 0) {
+          movies = line
+            .trim()
+            .split(",")
+            .map(movie => movie.trim())
+            .filter(movie => movie.length > 0);
+          break;
+        }
+      }
+
+      if (movies.length === 0) {
+        movies = movieString
+          .split(/[,\n]/)
+          .map(movie => movie.trim())
+          .filter(
+            movie =>
+              movie.length > 0 &&
+              !movie.toLowerCase().includes("recommendation")
+          )
+          .slice(0, 5);
+      }
+
+      if (movies.length === 0) {
+        throw new Error("No movies found in AI response");
+      }
+
+      const tmdbResults = await searchMovieTMDB(movies);
+
+      dispatch(
+        addGptMovieResult({
+          movieNames: movies,
+          movieResults: tmdbResults
+        })
+      );
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="pt-[10%] flex justify-center">
+    <div className="pt-[40%] md:p-0 md:pt-[10%] flex justify-center">
       <form
-        className="w-1/2 bg-black grid grid-cols-12"
+        className="w-full md:w-1/2 bg-black grid grid-cols-12"
         onSubmit={(e) => e.preventDefault()}
       >
         <input
@@ -65,15 +121,28 @@ const GptSearchBar = () => {
           type="text"
           className="p-4 m-4 bg-white col-span-9"
           placeholder={lang[langKey].gptSearchPlaceHolder}
+          disabled={loading}
         />
         <button
-          className="col-span-3 m-4 py-2 px-4 bg-red-600 text-white rounded-lg"
+          className={`col-span-3 m-4 py-2 px-4 text-white rounded-lg ${
+            loading
+              ? "bg-gray-500 cursor-not-allowed"
+              : "bg-red-600 hover:bg-red-700"
+          }`}
           onClick={handleGptSearchClick}
+          disabled={loading}
         >
-          {lang[langKey].search}
+          {loading ? "Loading..." : lang[langKey].search}
         </button>
       </form>
+
+      {error && (
+        <div className="fixed top-4 right-4 bg-red-500 text-white p-4 rounded-lg">
+          Error: {error}
+        </div>
+      )}
     </div>
   );
 };
+
 export default GptSearchBar;
