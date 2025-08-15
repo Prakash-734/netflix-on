@@ -5,7 +5,7 @@ import GptSearchBar from "./GptSearchBar";
 const GptSearch = () => {
   return (
     <>
-    <div className="fixed -z-10 ">
+    <div className="fixed -z-20 ">
         <img
   className="w-screen h-screen object-cover fixed top-0 left-0"
   src="auth_bg.jpg"

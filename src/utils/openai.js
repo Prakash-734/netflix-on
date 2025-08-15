@@ -1,22 +1,10 @@
-// import OpenAI from 'openai';
-// import { OPENAI_KEY } from './constants';
-
-// const openai = new OpenAI({
-//         baseURL: 'https://api.deepseek.com',
-//         apiKey: OPENAI_KEY,
-//         dangerouslyAllowBrowser:true
-// });
-
-// export default openai;
+import Groq from "groq-sdk";
+import { OPENAI_KEY } from './constants';
 
 
-
-// import { OPENAI_KEY } from './constants';
-// import Groq from "groq-sdk";
-
-// const groq = new Groq({ apiKey:OPENAI_KEY,
-//     dangerouslyAllowBrowser:true,
-//  });
+const groq = new Groq({ apiKey:OPENAI_KEY,
+    dangerouslyAllowBrowser:true,
+ });
 
 
-// export default groq;
+export default groq;
