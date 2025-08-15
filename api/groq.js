@@ -1,23 +1,36 @@
 export default async function handler(req, res) {
-  const { prompt } = req.body;
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method Not Allowed" });
+  }
 
   try {
-    const response = await fetch("https://api.groq.com/v1/chat/completions", {
+    // Parse request body manually
+    let body = "";
+    for await (const chunk of req) {
+      body += chunk;
+    }
+    const { prompt } = JSON.parse(body);
+
+    if (!prompt) {
+      return res.status(400).json({ error: "Prompt is required" });
+    }
+
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.OPENAI_KEY}`
+        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: "mixtral-8x7b-32768",
-        messages: [{ role: "user", content: prompt }]
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: prompt }],
       })
     });
 
     const data = await response.json();
-    res.status(200).json(data);
+    return res.status(200).json(data);
 
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch from Groq" });
+    return res.status(500).json({ error: error.message });
   }
 }
