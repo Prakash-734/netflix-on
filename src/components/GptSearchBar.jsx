@@ -1,7 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import lang from "../utils/languageConstants";
 import { useRef } from "react";
-import openai from "../utils/openai";
 import { API_OPTIONS } from "../utils/constants";
 import { addGptMovieResult } from "../utils/gptSlice";
 
@@ -17,24 +16,19 @@ const GptSearchBar = () => {
   }
 
   const handleGptSearchClick = async () => {
-    
-    
-    const gptQuery = "Act as a Movie Recommendation system and suggest some movies for the query :" + searchText.current.value + ". Give me ONLY movie names, no languages, no extra text. Format: MovieName1, MovieName2, MovieName3, MovieName4, MovieName5";
+  const gptQuery = "Act as a Movie Recommendation system and suggest some movies for the query :" + searchText.current.value + ". Give me ONLY movie names, no languages, no extra text. Format: MovieName1, MovieName2, MovieName3, MovieName4, MovieName5";
 
-    const result = await openai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      messages: [
-        { role: "user", content: gptQuery},
-      ],
-    });
+  // Call backend instead of using Groq SDK directly
+  const result = await fetch("/api/groq", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt: gptQuery })
+  });
 
-    if(!result.choices){
-      return "Not found"
-    }
+  const data = await result.json();
+  if (!data?.choices) return "Not found";
 
-    
-
-    let responseText = result.choices?.[0]?.message?.content.trim();
+  let responseText = data.choices?.[0]?.message?.content.trim();
     
     
     let movies = responseText.split(",").map(item => item.trim());

@@ -1,5 +1,4 @@
 const VITE_TMDB_KEY = import.meta.env.VITE_TMDB_KEY
-const VITE_OPENAI_KEY = import.meta.env.VITE_OPENAI_KEY
 
 export const API_OPTIONS = {
   method: "GET",
@@ -17,5 +16,3 @@ export const SUPPORTED_LANGUAGES = [
   { identifier: "hin", name: "Hindi" },
 ];
 
-
-export const OPENAI_KEY = VITE_OPENAI_KEY
